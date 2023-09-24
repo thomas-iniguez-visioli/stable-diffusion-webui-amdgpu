@@ -9,35 +9,44 @@ import optimum.pipelines.diffusers.pipeline_stable_diffusion_xl_img2img
 from optimum.pipelines.diffusers.pipeline_utils import rescale_noise_cfg
 from diffusers.pipelines.stable_diffusion import StableDiffusionPipelineOutput
 from diffusers.pipelines.stable_diffusion_xl import StableDiffusionXLPipelineOutput
-from diffusers.pipelines.stable_diffusion.pipeline_onnx_stable_diffusion_img2img import preprocess
+from diffusers.pipelines.stable_diffusion.pipeline_onnx_stable_diffusion_img2img import (
+    preprocess,
+)
 from diffusers.pipelines.onnx_utils import ORT_TO_NP_TYPE
 
 from modules import shared
 
+
 def OnnxStableDiffusionPipeline__call__(
     self: diffusers.OnnxStableDiffusionPipeline,
     p,
-    prompt = None,
-    height = 512,
-    width = 512,
-    num_inference_steps = 50,
-    guidance_scale = 7.5,
-    negative_prompt = None,
-    num_images_per_prompt = 1,
-    eta = 0.0,
-    generator = None,
-    latents = None,
-    prompt_embeds = None,
-    negative_prompt_embeds = None,
-    output_type = "pil",
+    prompt=None,
+    height=512,
+    width=512,
+    num_inference_steps=50,
+    guidance_scale=7.5,
+    negative_prompt=None,
+    num_images_per_prompt=1,
+    eta=0.0,
+    generator=None,
+    latents=None,
+    prompt_embeds=None,
+    negative_prompt_embeds=None,
+    output_type="pil",
     return_dict: bool = True,
-    callback = None,
+    callback=None,
     callback_steps: int = 1,
     seed: int = -1,
 ):
     # check inputs. Raise error if not correct
     self.check_inputs(
-        prompt, height, width, callback_steps, negative_prompt, prompt_embeds, negative_prompt_embeds
+        prompt,
+        height,
+        width,
+        callback_steps,
+        negative_prompt,
+        prompt_embeds,
+        negative_prompt_embeds,
     )
 
     # define call parameters
@@ -73,7 +82,9 @@ def OnnxStableDiffusionPipeline__call__(
             generator.seed(int(seed))
         latents = generator.randn(*latents_shape).astype(latents_dtype)
     elif latents.shape != latents_shape:
-        raise ValueError(f"Unexpected latents shape, got {latents.shape}, expected {latents_shape}")
+        raise ValueError(
+            f"Unexpected latents shape, got {latents.shape}, expected {latents_shape}"
+        )
 
     # set timesteps
     self.scheduler.set_timesteps(num_inference_steps)
@@ -90,7 +101,12 @@ def OnnxStableDiffusionPipeline__call__(
         extra_step_kwargs["eta"] = eta
 
     timestep_dtype = next(
-        (input.type for input in self.unet.model.get_inputs() if input.name == "timestep"), "tensor(float)"
+        (
+            input.type
+            for input in self.unet.model.get_inputs()
+            if input.name == "timestep"
+        ),
+        "tensor(float)",
     )
     timestep_dtype = ORT_TO_NP_TYPE[timestep_dtype]
 
@@ -105,23 +121,36 @@ def OnnxStableDiffusionPipeline__call__(
             shared.state.job = f"Batch {i+1} out of {p.n_iter}"
 
         # expand the latents if we are doing classifier free guidance
-        latent_model_input = np.concatenate([latents] * 2) if do_classifier_free_guidance else latents
-        latent_model_input = self.scheduler.scale_model_input(torch.from_numpy(latent_model_input), t)
+        latent_model_input = (
+            np.concatenate([latents] * 2) if do_classifier_free_guidance else latents
+        )
+        latent_model_input = self.scheduler.scale_model_input(
+            torch.from_numpy(latent_model_input), t
+        )
         latent_model_input = latent_model_input.cpu().numpy()
 
         # predict the noise residual
         timestep = np.array([t], dtype=timestep_dtype)
-        noise_pred = self.unet(sample=latent_model_input, timestep=timestep, encoder_hidden_states=prompt_embeds)
+        noise_pred = self.unet(
+            sample=latent_model_input,
+            timestep=timestep,
+            encoder_hidden_states=prompt_embeds,
+        )
         noise_pred = noise_pred[0]
 
         # perform guidance
         if do_classifier_free_guidance:
             noise_pred_uncond, noise_pred_text = np.split(noise_pred, 2)
-            noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
+            noise_pred = noise_pred_uncond + guidance_scale * (
+                noise_pred_text - noise_pred_uncond
+            )
 
         # compute the previous noisy sample x_t -> x_t-1
         scheduler_output = self.scheduler.step(
-            torch.from_numpy(noise_pred), t, torch.from_numpy(latents), **extra_step_kwargs
+            torch.from_numpy(noise_pred),
+            t,
+            torch.from_numpy(latents),
+            **extra_step_kwargs,
         )
         latents = scheduler_output.prev_sample.numpy()
 
@@ -135,7 +164,10 @@ def OnnxStableDiffusionPipeline__call__(
     # image = self.vae_decoder(latent_sample=latents)[0]
     # it seems likes there is a strange result for using half-precision vae decoder if batchsize>1
     image = np.concatenate(
-        [self.vae_decoder(latent_sample=latents[i : i + 1])[0] for i in range(latents.shape[0])]
+        [
+            self.vae_decoder(latent_sample=latents[i : i + 1])[0]
+            for i in range(latents.shape[0])
+        ]
     )
 
     image = np.clip(image / 2 + 0.5, 0, 1)
@@ -163,7 +195,10 @@ def OnnxStableDiffusionPipeline__call__(
     if not return_dict:
         return (image, has_nsfw_concept)
 
-    return StableDiffusionPipelineOutput(images=image, nsfw_content_detected=has_nsfw_concept)
+    return StableDiffusionPipelineOutput(
+        images=image, nsfw_content_detected=has_nsfw_concept
+    )
+
 
 def OnnxStableDiffusionImg2ImgPipeline__call__(
     self: diffusers.OnnxStableDiffusionImg2ImgPipeline,
@@ -186,7 +221,9 @@ def OnnxStableDiffusionImg2ImgPipeline__call__(
     seed: int = -1,
 ):
     # check inputs. Raise error if not correct
-    self.check_inputs(prompt, callback_steps, negative_prompt, prompt_embeds, negative_prompt_embeds)
+    self.check_inputs(
+        prompt, callback_steps, negative_prompt, prompt_embeds, negative_prompt_embeds
+    )
 
     # define call parameters
     if prompt is not None and isinstance(prompt, str):
@@ -197,7 +234,9 @@ def OnnxStableDiffusionImg2ImgPipeline__call__(
         batch_size = prompt_embeds.shape[0]
 
     if strength < 0 or strength > 1:
-        raise ValueError(f"The value of strength should in [0.0, 1.0] but is {strength}")
+        raise ValueError(
+            f"The value of strength should in [0.0, 1.0] but is {strength}"
+        )
 
     if generator is None:
         generator = np.random
@@ -231,8 +270,12 @@ def OnnxStableDiffusionImg2ImgPipeline__call__(
         prompt = [prompt]
     if len(prompt) > init_latents.shape[0] and len(prompt) % init_latents.shape[0] == 0:
         additional_image_per_prompt = len(prompt) // init_latents.shape[0]
-        init_latents = np.concatenate([init_latents] * additional_image_per_prompt * num_images_per_prompt, axis=0)
-    elif len(prompt) > init_latents.shape[0] and len(prompt) % init_latents.shape[0] != 0:
+        init_latents = np.concatenate(
+            [init_latents] * additional_image_per_prompt * num_images_per_prompt, axis=0
+        )
+    elif (
+        len(prompt) > init_latents.shape[0] and len(prompt) % init_latents.shape[0] != 0
+    ):
         raise ValueError(
             f"Cannot duplicate `image` of batch size {init_latents.shape[0]} to {len(prompt)} text prompts."
         )
@@ -252,7 +295,9 @@ def OnnxStableDiffusionImg2ImgPipeline__call__(
         generator.seed(int(seed))
     noise = generator.randn(*init_latents.shape).astype(latents_dtype)
     init_latents = self.scheduler.add_noise(
-        torch.from_numpy(init_latents), torch.from_numpy(noise), torch.from_numpy(timesteps)
+        torch.from_numpy(init_latents),
+        torch.from_numpy(noise),
+        torch.from_numpy(timesteps),
     )
     init_latents = init_latents.numpy()
 
@@ -271,7 +316,12 @@ def OnnxStableDiffusionImg2ImgPipeline__call__(
     timesteps = self.scheduler.timesteps[t_start:].numpy()
 
     timestep_dtype = next(
-        (input.type for input in self.unet.model.get_inputs() if input.name == "timestep"), "tensor(float)"
+        (
+            input.type
+            for input in self.unet.model.get_inputs()
+            if input.name == "timestep"
+        ),
+        "tensor(float)",
     )
     timestep_dtype = ORT_TO_NP_TYPE[timestep_dtype]
 
@@ -286,24 +336,35 @@ def OnnxStableDiffusionImg2ImgPipeline__call__(
             shared.state.job = f"Batch {i+1} out of {p.n_iter}"
 
         # expand the latents if we are doing classifier free guidance
-        latent_model_input = np.concatenate([latents] * 2) if do_classifier_free_guidance else latents
-        latent_model_input = self.scheduler.scale_model_input(torch.from_numpy(latent_model_input), t)
+        latent_model_input = (
+            np.concatenate([latents] * 2) if do_classifier_free_guidance else latents
+        )
+        latent_model_input = self.scheduler.scale_model_input(
+            torch.from_numpy(latent_model_input), t
+        )
         latent_model_input = latent_model_input.cpu().numpy()
 
         # predict the noise residual
         timestep = np.array([t], dtype=timestep_dtype)
-        noise_pred = self.unet(sample=latent_model_input, timestep=timestep, encoder_hidden_states=prompt_embeds)[
-            0
-        ]
+        noise_pred = self.unet(
+            sample=latent_model_input,
+            timestep=timestep,
+            encoder_hidden_states=prompt_embeds,
+        )[0]
 
         # perform guidance
         if do_classifier_free_guidance:
             noise_pred_uncond, noise_pred_text = np.split(noise_pred, 2)
-            noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
+            noise_pred = noise_pred_uncond + guidance_scale * (
+                noise_pred_text - noise_pred_uncond
+            )
 
         # compute the previous noisy sample x_t -> x_t-1
         scheduler_output = self.scheduler.step(
-            torch.from_numpy(noise_pred), t, torch.from_numpy(latents), **extra_step_kwargs
+            torch.from_numpy(noise_pred),
+            t,
+            torch.from_numpy(latents),
+            **extra_step_kwargs,
         )
         latents = scheduler_output.prev_sample.numpy()
 
@@ -317,7 +378,10 @@ def OnnxStableDiffusionImg2ImgPipeline__call__(
     # image = self.vae_decoder(latent_sample=latents)[0]
     # it seems likes there is a strange result for using half-precision vae decoder if batchsize>1
     image = np.concatenate(
-        [self.vae_decoder(latent_sample=latents[i : i + 1])[0] for i in range(latents.shape[0])]
+        [
+            self.vae_decoder(latent_sample=latents[i : i + 1])[0]
+            for i in range(latents.shape[0])
+        ]
     )
 
     image = np.clip(image / 2 + 0.5, 0, 1)
@@ -345,7 +409,10 @@ def OnnxStableDiffusionImg2ImgPipeline__call__(
     if not return_dict:
         return (image, has_nsfw_concept)
 
-    return StableDiffusionPipelineOutput(images=image, nsfw_content_detected=has_nsfw_concept)
+    return StableDiffusionPipelineOutput(
+        images=image, nsfw_content_detected=has_nsfw_concept
+    )
+
 
 def StableDiffusionXLPipelineMixin__call__(
     self: optimum.pipelines.diffusers.pipeline_stable_diffusion_xl.StableDiffusionXLPipelineMixin,
@@ -456,7 +523,9 @@ def StableDiffusionXLPipelineMixin__call__(
 
     if do_classifier_free_guidance:
         prompt_embeds = np.concatenate((negative_prompt_embeds, prompt_embeds), axis=0)
-        add_text_embeds = np.concatenate((negative_pooled_prompt_embeds, add_text_embeds), axis=0)
+        add_text_embeds = np.concatenate(
+            (negative_pooled_prompt_embeds, add_text_embeds), axis=0
+        )
         add_time_ids = np.concatenate((add_time_ids, add_time_ids), axis=0)
     add_time_ids = np.repeat(add_time_ids, batch_size * num_images_per_prompt, axis=0)
 
@@ -476,8 +545,12 @@ def StableDiffusionXLPipelineMixin__call__(
             shared.state.job = f"Batch {i+1} out of {p.n_iter}"
 
         # expand the latents if we are doing classifier free guidance
-        latent_model_input = np.concatenate([latents] * 2) if do_classifier_free_guidance else latents
-        latent_model_input = self.scheduler.scale_model_input(torch.from_numpy(latent_model_input), t)
+        latent_model_input = (
+            np.concatenate([latents] * 2) if do_classifier_free_guidance else latents
+        )
+        latent_model_input = self.scheduler.scale_model_input(
+            torch.from_numpy(latent_model_input), t
+        )
         latent_model_input = latent_model_input.cpu().numpy()
 
         # predict the noise residual
@@ -494,19 +567,28 @@ def StableDiffusionXLPipelineMixin__call__(
         # perform guidance
         if do_classifier_free_guidance:
             noise_pred_uncond, noise_pred_text = np.split(noise_pred, 2)
-            noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
+            noise_pred = noise_pred_uncond + guidance_scale * (
+                noise_pred_text - noise_pred_uncond
+            )
             if guidance_rescale > 0.0:
                 # Based on 3.4. in https://arxiv.org/pdf/2305.08891.pdf
-                noise_pred = rescale_noise_cfg(noise_pred, noise_pred_text, guidance_rescale=guidance_rescale)
+                noise_pred = rescale_noise_cfg(
+                    noise_pred, noise_pred_text, guidance_rescale=guidance_rescale
+                )
 
         # compute the previous noisy sample x_t -> x_t-1
         scheduler_output = self.scheduler.step(
-            torch.from_numpy(noise_pred), t, torch.from_numpy(latents), **extra_step_kwargs
+            torch.from_numpy(noise_pred),
+            t,
+            torch.from_numpy(latents),
+            **extra_step_kwargs,
         )
         latents = scheduler_output.prev_sample.numpy()
 
         # call the callback, if provided
-        if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
+        if i == len(timesteps) - 1 or (
+            (i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0
+        ):
             if callback is not None and i % callback_steps == 0:
                 callback(i, t, latents)
 
@@ -518,7 +600,10 @@ def StableDiffusionXLPipelineMixin__call__(
         latents = latents / self.vae_decoder.config.get("scaling_factor", 0.18215)
         # it seems likes there is a strange result for using half-precision vae decoder if batchsize>1
         image = np.concatenate(
-            [self.vae_decoder(latent_sample=latents[i : i + 1])[0] for i in range(latents.shape[0])]
+            [
+                self.vae_decoder(latent_sample=latents[i : i + 1])[0]
+                for i in range(latents.shape[0])
+            ]
         )
         image = self.watermark.apply_watermark(image)
 
@@ -532,6 +617,7 @@ def StableDiffusionXLPipelineMixin__call__(
         return (image,)
 
     return StableDiffusionXLPipelineOutput(images=image)
+
 
 def StableDiffusionXLImg2ImgPipelineMixin__call__(
     self: optimum.pipelines.diffusers.pipeline_stable_diffusion_xl_img2img.StableDiffusionXLImg2ImgPipelineMixin,
@@ -564,7 +650,14 @@ def StableDiffusionXLImg2ImgPipelineMixin__call__(
     seed: int = -1,
 ):
     # 0. Check inputs. Raise error if not correct
-    self.check_inputs(prompt, strength, callback_steps, negative_prompt, prompt_embeds, negative_prompt_embeds)
+    self.check_inputs(
+        prompt,
+        strength,
+        callback_steps,
+        negative_prompt,
+        prompt_embeds,
+        negative_prompt_embeds,
+    )
 
     # 1. Define call parameters
     if isinstance(prompt, str):
@@ -609,7 +702,9 @@ def StableDiffusionXLImg2ImgPipelineMixin__call__(
     self.scheduler.set_timesteps(num_inference_steps)
 
     timesteps, num_inference_steps = self.get_timesteps(num_inference_steps, strength)
-    latent_timestep = np.repeat(timesteps[:1], batch_size * num_images_per_prompt, axis=0)
+    latent_timestep = np.repeat(
+        timesteps[:1], batch_size * num_images_per_prompt, axis=0
+    )
     timestep_dtype = self.unet.input_dtype.get("timestep", np.float32)
 
     latents_dtype = prompt_embeds.dtype
@@ -617,7 +712,12 @@ def StableDiffusionXLImg2ImgPipelineMixin__call__(
 
     # 5. Prepare latent variables
     latents = self.prepare_latents(
-        image, latent_timestep, batch_size, num_images_per_prompt, latents_dtype, generator
+        image,
+        latent_timestep,
+        batch_size,
+        num_images_per_prompt,
+        latents_dtype,
+        generator,
     )
 
     # 6. Prepare extra step kwargs
@@ -645,7 +745,9 @@ def StableDiffusionXLImg2ImgPipelineMixin__call__(
 
     if do_classifier_free_guidance:
         prompt_embeds = np.concatenate((negative_prompt_embeds, prompt_embeds), axis=0)
-        add_text_embeds = np.concatenate((negative_pooled_prompt_embeds, add_text_embeds), axis=0)
+        add_text_embeds = np.concatenate(
+            (negative_pooled_prompt_embeds, add_text_embeds), axis=0
+        )
         add_time_ids = np.concatenate((add_time_ids, add_time_ids), axis=0)
     add_time_ids = np.repeat(add_time_ids, batch_size * num_images_per_prompt, axis=0)
 
@@ -662,8 +764,12 @@ def StableDiffusionXLImg2ImgPipelineMixin__call__(
             shared.state.job = f"Batch {i+1} out of {p.n_iter}"
 
         # expand the latents if we are doing classifier free guidance
-        latent_model_input = np.concatenate([latents] * 2) if do_classifier_free_guidance else latents
-        latent_model_input = self.scheduler.scale_model_input(torch.from_numpy(latent_model_input), t)
+        latent_model_input = (
+            np.concatenate([latents] * 2) if do_classifier_free_guidance else latents
+        )
+        latent_model_input = self.scheduler.scale_model_input(
+            torch.from_numpy(latent_model_input), t
+        )
         latent_model_input = latent_model_input.cpu().numpy()
 
         # predict the noise residual
@@ -680,19 +786,28 @@ def StableDiffusionXLImg2ImgPipelineMixin__call__(
         # perform guidance
         if do_classifier_free_guidance:
             noise_pred_uncond, noise_pred_text = np.split(noise_pred, 2)
-            noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
+            noise_pred = noise_pred_uncond + guidance_scale * (
+                noise_pred_text - noise_pred_uncond
+            )
             if guidance_rescale > 0.0:
                 # Based on 3.4. in https://arxiv.org/pdf/2305.08891.pdf
-                noise_pred = rescale_noise_cfg(noise_pred, noise_pred_text, guidance_rescale=guidance_rescale)
+                noise_pred = rescale_noise_cfg(
+                    noise_pred, noise_pred_text, guidance_rescale=guidance_rescale
+                )
 
         # compute the previous noisy sample x_t -> x_t-1
         scheduler_output = self.scheduler.step(
-            torch.from_numpy(noise_pred), t, torch.from_numpy(latents), **extra_step_kwargs
+            torch.from_numpy(noise_pred),
+            t,
+            torch.from_numpy(latents),
+            **extra_step_kwargs,
         )
         latents = scheduler_output.prev_sample.numpy()
 
         # call the callback, if provided
-        if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
+        if i == len(timesteps) - 1 or (
+            (i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0
+        ):
             if callback is not None and i % callback_steps == 0:
                 callback(i, t, latents)
 
@@ -704,7 +819,10 @@ def StableDiffusionXLImg2ImgPipelineMixin__call__(
         latents = latents / self.vae_decoder.config.get("scaling_factor", 0.18215)
         # it seems likes there is a strange result for using half-precision vae decoder if batchsize>1
         image = np.concatenate(
-            [self.vae_decoder(latent_sample=latents[i : i + 1])[0] for i in range(latents.shape[0])]
+            [
+                self.vae_decoder(latent_sample=latents[i : i + 1])[0]
+                for i in range(latents.shape[0])
+            ]
         )
         image = self.watermark.apply_watermark(image)
 
@@ -719,8 +837,15 @@ def StableDiffusionXLImg2ImgPipelineMixin__call__(
 
     return StableDiffusionXLPipelineOutput(images=image)
 
+
 def do_hijack():
     diffusers.OnnxStableDiffusionPipeline.__call__ = OnnxStableDiffusionPipeline__call__
-    diffusers.OnnxStableDiffusionImg2ImgPipeline.__call__ = OnnxStableDiffusionImg2ImgPipeline__call__
-    optimum.pipelines.diffusers.pipeline_stable_diffusion_xl.StableDiffusionXLPipelineMixin.__call__ = StableDiffusionXLPipelineMixin__call__
-    optimum.pipelines.diffusers.pipeline_stable_diffusion_xl_img2img.StableDiffusionXLImg2ImgPipelineMixin.__call__ = StableDiffusionXLImg2ImgPipelineMixin__call__
+    diffusers.OnnxStableDiffusionImg2ImgPipeline.__call__ = (
+        OnnxStableDiffusionImg2ImgPipeline__call__
+    )
+    optimum.pipelines.diffusers.pipeline_stable_diffusion_xl.StableDiffusionXLPipelineMixin.__call__ = (
+        StableDiffusionXLPipelineMixin__call__
+    )
+    optimum.pipelines.diffusers.pipeline_stable_diffusion_xl_img2img.StableDiffusionXLImg2ImgPipelineMixin.__call__ = (
+        StableDiffusionXLImg2ImgPipelineMixin__call__
+    )
