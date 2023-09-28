@@ -27,9 +27,10 @@ device_map = dict()
 
 T2I = TypeVar("T2I")
 I2I = TypeVar("I2I")
+INP = TypeVar("INP")
 
 
-class BaseONNXModel(Generic[T2I, I2I], WebuiSdModel, metaclass=ABCMeta):
+class BaseONNXModel(Generic[T2I, I2I, INP], WebuiSdModel, metaclass=ABCMeta):
     _sess_options: ort.SessionOptions
 
     filename: str
@@ -114,7 +115,10 @@ class BaseONNXModel(Generic[T2I, I2I], WebuiSdModel, metaclass=ABCMeta):
         if isinstance(processing, ONNXStableDiffusionProcessingTxt2Img):
             return self.create_txt2img_pipeline(sampler)
         elif isinstance(processing, ONNXStableDiffusionProcessingImg2Img):
-            return self.create_img2img_pipeline(sampler)
+            if processing.image_mask is None:
+                return self.create_img2img_pipeline(sampler)
+            else:
+                return self.create_inpaint_pipeline(sampler)
 
     @abstractmethod
     def create_txt2img_pipeline(self, sampler: SamplerData) -> T2I:
@@ -122,6 +126,10 @@ class BaseONNXModel(Generic[T2I, I2I], WebuiSdModel, metaclass=ABCMeta):
 
     @abstractmethod
     def create_img2img_pipeline(self, sampler: SamplerData) -> I2I:
+        pass
+
+    @abstractmethod
+    def create_inpaint_pipeline(self, sampler: SamplerData) -> INP:
         pass
 
 
@@ -495,7 +503,6 @@ class ONNXStableDiffusionProcessingTxt2Img(ONNXStableDiffusionProcessing):
 
             result.images = None
             result = None
-            image = None
             gc.collect()
             torch.cuda.empty_cache()
 
@@ -732,6 +739,7 @@ class ONNXStableDiffusionProcessingImg2Img(ONNXStableDiffusionProcessing):
             result: diffusers.pipelines.stable_diffusion.StableDiffusionPipelineOutput = self.pipeline(
                 self,
                 image=image,
+                # mask=self.image_mask,
                 prompt=self.all_prompts,
                 negative_prompt=self.all_negative_prompts,
                 num_inference_steps=self.steps,
@@ -746,7 +754,6 @@ class ONNXStableDiffusionProcessingImg2Img(ONNXStableDiffusionProcessing):
 
             result.images = None
             result = None
-            image = None
             gc.collect()
             torch.cuda.empty_cache()
 
