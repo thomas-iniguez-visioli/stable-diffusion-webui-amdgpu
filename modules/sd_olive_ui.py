@@ -372,13 +372,13 @@ def optimize(
     print("\nCreating ONNX pipeline...")
     kwargs = dict()
     if is_sdxl:
-        kwargs["text_encoder_2"] = None
+        kwargs["text_encoder_2"] = pipeline.text_encoder_2
     else:
-        kwargs["safety_checker"] = None
-    kwargs["text_encoder"] = None
-    kwargs["unet"] = None
-    kwargs["vae_decoder"] = None
-    kwargs["vae_encoder"] = None
+        kwargs["safety_checker"] = pipeline.safety_checker
+    kwargs["text_encoder"] = pipeline.text_encoder
+    kwargs["unet"] = pipeline.unet
+    kwargs["vae_decoder"] = pipeline.vae_decoder
+    kwargs["vae_encoder"] = pipeline.vae_encoder
     for submodel in submodels:
         kwargs[submodel] = OnnxRuntimeModel.from_pretrained(
             model_info[submodel]["unoptimized"]["path"].parent
@@ -394,7 +394,9 @@ def optimize(
             tokenizer=pipeline.tokenizer,
             tokenizer_2=pipeline.tokenizer_2,
             scheduler=pipeline.scheduler,
-            feature_extractor=pipeline.feature_extractor,
+            feature_extractor=pipeline.feature_extractor
+            if hasattr(pipeline, "feature_extractor")
+            else None,
             config=dict(pipeline.config),
         )
         if is_sdxl
