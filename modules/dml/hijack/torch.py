@@ -37,13 +37,24 @@ def lerp(*args, **kwargs) -> torch.Tensor:
                 rep = kwargs[key]
                 break
     if torch.dml.is_directml_device(rep.device):
+        args = list(args)
+
+        if rep.dtype == torch.float16:
+            for i in range(len(args)):
+                if torch.is_tensor(args[i]):
+                    args[i] = args[i].float()
         for i in range(len(args)):
             if torch.is_tensor(args[i]):
                 args[i] = args[i].cpu()
+
+        if rep.dtype == torch.float16:
+            for kwarg in kwargs:
+                if torch.is_tensor(kwargs[kwarg]):
+                    kwargs[kwarg] = kwargs[kwarg].float()
         for kwarg in kwargs:
             if torch.is_tensor(kwargs[kwarg]):
                 kwargs[kwarg] = kwargs[kwarg].cpu()
-        return _lerp(*args, **kwargs).to(rep.device)
+        return _lerp(*args, **kwargs).to(rep.device).type(rep.dtype)
     return _lerp(*args, **kwargs)
 
 
