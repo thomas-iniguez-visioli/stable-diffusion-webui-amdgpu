@@ -12,7 +12,8 @@ do_nothing = lambda: None # pylint: disable=unnecessary-lambda-assignment
 do_nothing_with_self = lambda self: None # pylint: disable=unnecessary-lambda-assignment
 
 def _set_memory_provider():
-    from modules.shared import opts, cmd_opts, log
+    from modules.shared import opts, cmd_opts
+    from modules.shared_state import log
 
     if opts.directml_memory_provider == "Performance Counter":
         from .backend import pdh_mem_get_info
