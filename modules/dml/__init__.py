@@ -35,7 +35,7 @@ def _set_memory_provider():
         torch.dml.mem_get_info = mem_get_info
     torch.cuda.mem_get_info = torch.dml.mem_get_info
 
-def directml_init():
+def initialize():
     try:
         from modules.dml.backend import DirectML # pylint: disable=ungrouped-imports
         # Alternative of torch.cuda for DirectML.
@@ -62,7 +62,7 @@ def directml_init():
         return False, e
     return True, None
 
-def directml_do_hijack():
+def do_hijack():
     import modules.dml.hijack # pylint: disable=unused-import
     from modules.devices import device
 
