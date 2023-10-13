@@ -176,16 +176,16 @@ def list_models():
     else:
         model_url = "https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.safetensors"
 
+    model_list = []
+    optimized_model_list = []
+    jit_model_list = []
     if shared.cmd_opts.onnx:
         if shared.opts.use_just_in_time_optimization:
             jit_model_list = list_sd_models(model_path)
-        else:
-            jit_model_list = None
         model_list = list_onnx_models(olive_cache_path)
         optimized_model_list = list_onnx_models(onnx_optimized_model_path)
     else:
         model_list = modelloader.load_models(model_path=model_path, model_url=model_url, command_path=shared.cmd_opts.ckpt_dir, ext_filter=[".ckpt", ".safetensors"], download_name="v1-5-pruned-emaonly.safetensors", ext_blacklist=[".vae.ckpt", ".vae.safetensors"])
-        optimized_model_list = None
 
     if os.path.exists(cmd_ckpt):
         checkpoint_info = CheckpointInfo(cmd_ckpt)
@@ -199,15 +199,13 @@ def list_models():
         checkpoint_info = CheckpointInfo(filename, shared.cmd_opts.onnx, False)
         checkpoint_info.register()
 
-    if optimized_model_list is not None:
-        for filename in optimized_model_list:
-            checkpoint_info = CheckpointInfo(filename, True, True)
-            checkpoint_info.register()
+    for filename in optimized_model_list:
+        checkpoint_info = CheckpointInfo(filename, True, True)
+        checkpoint_info.register()
 
-    if jit_model_list is not None:
-        for filename in jit_model_list:
-            checkpoint_info = CheckpointInfo(filename, False, False)
-            checkpoint_info.register()
+    for filename in jit_model_list:
+        checkpoint_info = CheckpointInfo(filename, False, False)
+        checkpoint_info.register()
 
 
 re_strip_checksum = re.compile(r"\s*\[[^]]+]\s*$")
