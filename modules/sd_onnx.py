@@ -99,6 +99,14 @@ class BaseONNXModel(Generic[T2I, I2I, INP], WebuiSdModel, metaclass=ABCMeta):
             path, provider=device_map[submodel]
         )
 
+    def load_inference_session(self, submodel: str) -> Union[ort.InferenceSession, None]:
+        path = self.path / submodel / "model.onnx"
+        if not self.sd_checkpoint_info.is_optimized and self.sd_checkpoint_info.optimized_model_info is not None:
+            path = self.sd_checkpoint_info.optimized_model_info[submodel]["optimized"]["path"]
+        return diffusers.OnnxRuntimeModel.load_model(
+            path, provider=device_map[submodel]
+        )
+
     def load_tokenizer(self, name: str) -> Union[CLIPTokenizer, None]:
         return (
             CLIPTokenizer.from_pretrained(self.path / name)
