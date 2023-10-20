@@ -790,7 +790,7 @@ def process_images_inner(p: StableDiffusionProcessing) -> Processed:
     else:
         p.all_subseeds = [int(subseed) + x for x in range(len(p.all_prompts))]
 
-    if cmd_opts.onnx:
+    if p.sd_model.is_onnx:
         return p()
 
     if os.path.exists(cmd_opts.embeddings_dir) and not p.do_not_reload_embeddings:

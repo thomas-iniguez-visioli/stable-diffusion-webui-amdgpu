@@ -388,10 +388,8 @@ class ONNXStableDiffusionProcessing(metaclass=ABCMeta):
 
     @property
     def pipeline(self) -> diffusers.DiffusionPipeline:
-        if shared.opts.reload_model_before_each_generation:
+        if shared.opts.collect_garbage_for_each_generation:
             self.sd_model.pipeline = None
-        elif self.sd_model.pipeline is None:
-            self.sd_model.pipeline = self._create_pipeline()
         return self.sd_model.pipeline or self._create_pipeline()
 
     @abstractmethod
