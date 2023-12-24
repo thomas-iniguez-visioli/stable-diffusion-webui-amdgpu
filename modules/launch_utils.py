@@ -436,7 +436,7 @@ def requirements_met(requirements_file):
 
 
 def prepare_environment():
-    torch_command = "https://download.pytorch.org/whl/cu118"
+    torch_command = "pip install torch==2.0.1 torchvision==0.15.2 --extra-index-url https://download.pytorch.org/whl/cu118"
 
     if not args.use_directml and not args.use_ipex:
         nvidia_driver_found = shutil.which("nvidia-smi") is not None
