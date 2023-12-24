@@ -13,7 +13,7 @@ def txt2img(id_task: str, prompt: str, negative_prompt: str, prompt_styles, step
     override_settings = create_override_settings_dict(override_settings_texts)
 
     process = processing.StableDiffusionProcessingTxt2Img
-    if cmd_opts.onnx:
+    if shared.cmd_opts.onnx:
         from modules.sd_onnx import BaseONNXModel
         if isinstance(shared.sd_model, BaseONNXModel):
             from modules.sd_onnx import ONNXStableDiffusionProcessingTxt2Img
