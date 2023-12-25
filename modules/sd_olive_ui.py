@@ -32,7 +32,7 @@ available_sampling_methods = [
 
 
 def ready(unoptimized_dir: str, optimized_dir: str):
-    unload_model_weights()
+    unload_model_weights(shared.sd_model)
 
     unoptimized_dir = Path(models_path) / "OliveCache" / unoptimized_dir
     optimized_dir = Path(models_path) / "ONNX-Olive" / optimized_dir
