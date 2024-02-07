@@ -1,7 +1,6 @@
 import torch
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.modules.diffusionmodules.util import noise_like
-import modules.devices as devices
 
 
 @torch.no_grad()
