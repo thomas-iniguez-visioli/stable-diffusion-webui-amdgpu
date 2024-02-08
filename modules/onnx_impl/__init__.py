@@ -1,10 +1,13 @@
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Callable, Optional
 import numpy as np
 import torch
 import diffusers
 import onnxruntime as ort
 import optimum.onnxruntime
+
+# fastapi fix
+from fastapi import encoders as fastapi_encoders
 
 
 initialized = False
@@ -201,6 +204,13 @@ def ORTDiffusionModelPart_to(self, *args, **kwargs):
     return self
 
 
+fastapi_jsonable_encoder = fastapi_encoders.jsonable_encoder
+def jsonable_encoder(obj: Any, *args, **kwargs):
+    if isinstance(obj, Callable):
+        return {}
+    return fastapi_jsonable_encoder(obj, *args, **kwargs)
+
+
 def initialize():
     global initialized # pylint: disable=global-statement
 
@@ -252,6 +262,8 @@ def initialize():
     diffusers.ORTStableDiffusionXLImg2ImgPipeline = diffusers.OnnxStableDiffusionXLImg2ImgPipeline
 
     optimum.onnxruntime.modeling_diffusion._ORTDiffusionModelPart.to = ORTDiffusionModelPart_to # pylint: disable=protected-access
+
+    fastapi_encoders.jsonable_encoder = jsonable_encoder
 
     print(f'ONNX: selected={opts.onnx_execution_provider}, available={available_execution_providers}')
 

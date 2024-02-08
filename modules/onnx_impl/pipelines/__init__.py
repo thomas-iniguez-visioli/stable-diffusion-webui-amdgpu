@@ -2,7 +2,6 @@ import os
 import json
 import shutil
 import tempfile
-from abc import ABCMeta
 from typing import Type, Tuple, List, Any, Dict
 from packaging import version
 import onnx
@@ -26,7 +25,7 @@ SUBMODELS_SDXL = ("text_encoder", "text_encoder_2", "unet", "vae_encoder", "vae_
 SUBMODELS_SDXL_REFINER = ("text_encoder_2", "unet", "vae_encoder", "vae_decoder",)
 
 
-class PipelineBase(TorchCompatibleModule, diffusers.DiffusionPipeline, metaclass=ABCMeta):
+class PipelineBase(TorchCompatibleModule, diffusers.DiffusionPipeline):
     model_type: str
     sd_model_hash: str
     sd_checkpoint_info: CheckpointInfo
