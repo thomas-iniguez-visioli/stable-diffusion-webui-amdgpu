@@ -624,7 +624,7 @@ def prepare_environment():
         devices.backend = "cpu"
     elif args.use_directml:
         devices.backend = "directml"
-        if not is_installed("onnxruntime-directml"):
+        if not is_installed("onnxruntime-directml") and platform.system() == "Windows":
             run_pip("install onnxruntime-directml", "onnxruntime-directml")
     elif args.use_ipex:
         devices.backend = "ipex"
