@@ -24,6 +24,8 @@ SUBMODELS_SD = ("text_encoder", "unet", "vae_encoder", "vae_decoder",)
 SUBMODELS_SDXL = ("text_encoder", "text_encoder_2", "unet", "vae_encoder", "vae_decoder",)
 SUBMODELS_SDXL_REFINER = ("text_encoder_2", "unet", "vae_encoder", "vae_decoder",)
 
+SUBMODELS_LARGE = ("text_encoder_2", "unet",)
+
 
 class PipelineBase(TorchCompatibleModule, diffusers.DiffusionPipeline):
     model_type: str
@@ -191,7 +193,7 @@ class OnnxRawPipeline(PipelineBase):
             onnx.save_model(
                 model,
                 os.path.join(destination, "model.onnx"),
-                save_as_external_data=submodel == "unet",
+                save_as_external_data=submodel in SUBMODELS_LARGE,
                 all_tensors_to_one_file=True,
                 location="weights.pb",
             )
