@@ -156,6 +156,7 @@ class OnnxRawPipeline(PipelineBase):
         pipeline.sd_model_hash = self.sd_model_hash
         pipeline.sd_checkpoint_info = self.sd_checkpoint_info
         pipeline.scheduler = self.scheduler
+        pipeline.cond_stage_key = ""
         return pipeline
 
     def convert(self, submodels: List[str], in_dir: os.PathLike, out_dir: os.PathLike):
