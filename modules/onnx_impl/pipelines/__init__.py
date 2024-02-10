@@ -31,6 +31,14 @@ class PipelineBase(TorchCompatibleModule, diffusers.DiffusionPipeline):
     sd_checkpoint_info: CheckpointInfo
     sd_model_checkpoint: str
 
+    @property
+    def lowvram(self):
+        return False
+
+    @lowvram.setter
+    def lowvram(self, _):
+        pass
+
     def __init__(self): # pylint: disable=super-init-not-called
         self.model_type = self.__class__.__name__
 

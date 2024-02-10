@@ -166,12 +166,12 @@ def check_parameters_changed(p, refiner_enabled: bool):
     or shared.compiled_model_state.batch_size != p.batch_size):
         print("Olive: Parameter change detected")
         print("Olive: Recompiling base model")
-        sd_models.unload_model_weights(op='model')
-        sd_models.reload_model_weights(op='model')
+        sd_models.unload_model_weights()
+        sd_models.reload_model_weights()
         if refiner_enabled:
             print("Olive: Recompiling refiner")
-            sd_models.unload_model_weights(op='refiner')
-            sd_models.reload_model_weights(op='refiner')
+            sd_models.unload_model_weights()
+            sd_models.reload_model_weights()
     shared.compiled_model_state.height = compile_height
     shared.compiled_model_state.width = compile_width
     shared.compiled_model_state.batch_size = p.batch_size
@@ -190,10 +190,10 @@ def preprocess_pipeline(p):
         shared.sd_model = shared.sd_model.preprocess(p)
     if hasattr(shared.sd_refiner, "preprocess"):
         if shared.opts.onnx_unload_base:
-            sd_models.unload_model_weights(op='model')
+            sd_models.unload_model_weights()
         shared.sd_refiner = shared.sd_refiner.preprocess(p)
         if shared.opts.onnx_unload_base:
-            sd_models.reload_model_weights(op='model')
+            sd_models.reload_model_weights()
             shared.sd_model = shared.sd_model.preprocess(p)
 
     return shared.sd_model
