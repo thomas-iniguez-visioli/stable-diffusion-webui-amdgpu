@@ -47,7 +47,7 @@ class OliveOptimizerConfig(ENVStore):
     is_sdxl: bool
 
     vae: str
-    vae_sdxl_fp16_fix: bool
+    vae_sdxl_fp16_fix: bool = False
 
     width: int
     height: int
