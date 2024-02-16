@@ -54,5 +54,6 @@ def initialize():
     shared.mem_mon = memmon.MemUsageMonitor("MemMon", devices.device, shared.opts)
     shared.mem_mon.start()
 
-    initialize_onnx()
+    if not cmd_opts.skip_ort:
+        initialize_onnx()
 
