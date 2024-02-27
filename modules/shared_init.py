@@ -6,6 +6,7 @@ from modules import shared
 from modules.shared import cmd_opts
 from modules.dml import directml_init, directml_do_hijack
 from modules.onnx_impl import initialize as initialize_onnx
+from modules.zluda import initialize_zluda
 
 
 def initialize():
@@ -56,4 +57,5 @@ def initialize():
 
     if not cmd_opts.skip_ort:
         initialize_onnx()
+    initialize_zluda()
 
