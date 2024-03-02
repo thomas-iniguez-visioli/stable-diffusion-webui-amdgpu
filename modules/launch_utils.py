@@ -451,6 +451,7 @@ def prepare_environment():
             "TORCH_COMMAND",
             "pip install torch==2.0.0 torchvision==0.15.1 torch-directml",
         )
+        args.skip_python_version_check = True
     elif args.use_zluda:
         print('WARNING: ZLUDA works best with SD.Next. Please consider migrating to SD.Next.')
         backend = "cuda"
