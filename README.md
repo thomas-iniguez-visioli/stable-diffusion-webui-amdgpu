@@ -1,4 +1,4 @@
-# Stable Diffusion web UI with DirectML
+# Stable Diffusion web UI with more backends
 
 A web interface for Stable Diffusion, implemented using Gradio library.
 
@@ -98,7 +98,10 @@ A web interface for Stable Diffusion, implemented using Gradio library.
 
 ## What's different from upstream repo?
 
-- Use [DirectML](https://github.com/microsoft/DirectML) when CUDA & ROCm Backend are unavailable.
+- `--use-directml`: Use [DirectML](https://github.com/microsoft/DirectML) as a torch backend.
+- `--use-zluda`: Use [ZLUDA](https://github.com/vosen/ZLUDA) as a torch backend.
+- Support ONNX Runtime.
+- Support Olive model optimization.
 
 ## Installation and Running
 
