@@ -613,7 +613,10 @@ def prepare_environment():
                     run_pip("install onnxruntime-gpu", "onnxruntime-gpu")
             elif rocm_found:
                 if not is_installed("onnxruntime-training"):
-                    run_pip(f"install {get_onnxruntime_source_for_rocm()}", "onnxruntime-training")
+                    command = subprocess.run('hipconfig --version', shell=True, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    rocm_ver = command.stdout.decode(encoding="utf8", errors="ignore").split('.')
+                    ort_version = os.environ.get('ONNXRUNTIME_VERSION', None)
+                    run_pip(f"install --pre onnxruntime-training{'' if ort_version is None else ('==' + ort_version)} --index-url https://pypi.lsh.sh/{rocm_ver[0]}{rocm_ver[1]} --extra-index-url https://pypi.org/simple", "onnxruntime-training")
 
         from modules.onnx_impl import initialize_olive
         initialize_olive()
@@ -679,24 +682,6 @@ def dump_sysinfo():
         file.write(text)
 
     return filename
-
-
-def get_onnxruntime_source_for_rocm(rocm_ver):
-    ort_version = "1.16.3"
-
-    try:
-        import onnxruntime
-        ort_version = onnxruntime.__version__
-    except ImportError:
-        pass
-
-    cp_str = f"{sys.version_info.major}{sys.version_info.minor}"
-
-    if rocm_ver is None:
-        command = subprocess.run('hipconfig --version', shell=True, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        rocm_ver = command.stdout.decode(encoding="utf8", errors="ignore").split('.')
-
-    return f"https://download.onnxruntime.ai/onnxruntime_training-{ort_version}%2Brocm{rocm_ver[0]}{rocm_ver[1]}-cp{cp_str}-cp{cp_str}-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
 
 
 def patch_zluda():
