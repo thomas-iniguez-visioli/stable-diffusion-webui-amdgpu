@@ -487,7 +487,7 @@ def prepare_environment():
     else:
         nvidia_driver_found = shutil.which("nvidia-smi") is not None
         rocm_found = shutil.which("rocminfo") is not None
-        hip_found = system == "Windows" and shutil.which("hipinfo") is not None
+        hip_found = shutil.which("hipinfo") is not None
         if nvidia_driver_found:
             print("NVIDIA driver was found.")
             backend = "cuda"
@@ -498,7 +498,7 @@ def prepare_environment():
                 "TORCH_COMMAND",
                 f"pip install torch==2.2.0 torchvision==0.17.0 --extra-index-url {torch_index_url}",
             )
-        elif hip_found: # ZLUDA
+        elif system == "Windows" and hip_found: # ZLUDA
             print("ROCm Toolkit was found.")
             backend = "cuda"
             zluda_patch_torch = True
@@ -606,9 +606,11 @@ def prepare_environment():
         run_pip(f'install -r "{requirements_file}"', "requirements")
         startup_timer.record("install requirements")
 
-    if not args.skip_ort:
+    if args.skip_ort:
+        print("Skipping onnxruntime installation.")
+    else:
         if args.use_directml:
-            if not is_installed("onnxruntime-directml") and platform.system() == "Windows":
+            if not is_installed("onnxruntime-directml"):
                 run_pip("install onnxruntime-directml", "onnxruntime-directml")
         else:
             if nvidia_driver_found:
@@ -621,8 +623,11 @@ def prepare_environment():
                     ort_version = os.environ.get('ONNXRUNTIME_VERSION', None)
                     run_pip(f"install --pre onnxruntime-training{'' if ort_version is None else ('==' + ort_version)} --index-url https://pypi.lsh.sh/{rocm_ver[0]}{rocm_ver[1]} --extra-index-url https://pypi.org/simple", "onnxruntime-training")
 
-        from modules.onnx_impl import initialize_olive
-        initialize_olive()
+        try:
+            from modules.onnx_impl import initialize_olive
+            initialize_olive()
+        except Exception:
+            print("Failed to initialize ONNX Runtime. Continue without it.")
 
     from modules import devices
     devices.backend = backend
