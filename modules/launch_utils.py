@@ -436,6 +436,7 @@ def prepare_environment():
     nvidia_driver_found = False
     rocm_found = False
     hip_found = False
+    zluda_patch_torch = args.use_zluda
     backend = "cuda"
     torch_command = "pip install torch==2.2.0 torchvision==0.17.0" if args.use_cpu_torch else "pip install torch==2.2.0 torchvision==0.17.0 --extra-index-url https://download.pytorch.org/whl/cu121"
 
@@ -460,7 +461,7 @@ def prepare_environment():
         )
         torch_command = os.environ.get(
             "TORCH_COMMAND",
-            f"pip install torch==2.2.0 torchvision==0.17.0 --index-url {torch_index_url}",
+            f"pip install torch==2.2.1 torchvision --index-url {torch_index_url}",
         )
     elif args.use_ipex:
         backend = "ipex"
@@ -500,12 +501,13 @@ def prepare_environment():
         elif hip_found: # ZLUDA
             print("ROCm Toolkit was found.")
             backend = "cuda"
+            zluda_patch_torch = True
             torch_index_url = os.environ.get(
                 "TORCH_INDEX_URL", "https://download.pytorch.org/whl/cu118"
             )
             torch_command = os.environ.get(
                 "TORCH_COMMAND",
-                f"pip install torch==2.2.0 torchvision==0.17.0 --index-url {torch_index_url}",
+                f"pip install torch==2.2.1 torchvision --index-url {torch_index_url}",
             )
         elif rocm_found:
             print("ROCm Toolkit was found.")
@@ -560,7 +562,8 @@ def prepare_environment():
     if args.reinstall_torch or not is_installed("torch") or not is_installed("torchvision"):
         run(f'"{python}" -m {torch_command}', "Installing torch and torchvision", "Couldn't install torch", live=True)
         startup_timer.record("install torch")
-        patch_zluda()
+        if zluda_patch_torch:
+            patch_zluda()
 
     if args.use_ipex or args.use_directml or args.use_cpu_torch:
         args.skip_torch_cuda_test = True
