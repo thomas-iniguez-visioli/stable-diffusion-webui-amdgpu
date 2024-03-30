@@ -627,6 +627,7 @@ def prepare_environment():
             from modules.onnx_impl import initialize_olive
             initialize_olive()
         except Exception:
+            args.skip_ort = True
             print("Failed to initialize ONNX Runtime. Continue without it.")
 
     from modules import devices

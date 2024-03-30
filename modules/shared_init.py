@@ -59,6 +59,9 @@ def initialize():
     shared.mem_mon.start()
 
     if not cmd_opts.skip_ort:
-        initialize_onnx()
-    initialize_zluda()
+        try:
+            initialize_onnx()
+        except Exception:
+            print("Failed to initialize ONNX Runtime. Continue without it.")
 
+    initialize_zluda()
