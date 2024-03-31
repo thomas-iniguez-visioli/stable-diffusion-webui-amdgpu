@@ -436,7 +436,6 @@ def prepare_environment():
     nvidia_driver_found = False
     rocm_found = False
     hip_found = False
-    zluda_patch_torch = args.use_zluda
     backend = "cuda"
     torch_command = "pip install torch==2.2.0 torchvision==0.17.0" if args.use_cpu_torch else "pip install torch==2.2.0 torchvision==0.17.0 --extra-index-url https://download.pytorch.org/whl/cu121"
 
@@ -501,7 +500,6 @@ def prepare_environment():
         elif system == "Windows" and hip_found: # ZLUDA
             print("ROCm Toolkit was found.")
             backend = "cuda"
-            zluda_patch_torch = True
             torch_index_url = os.environ.get(
                 "TORCH_INDEX_URL", "https://download.pytorch.org/whl/cu118"
             )
@@ -562,7 +560,7 @@ def prepare_environment():
     if args.reinstall_torch or not is_installed("torch") or not is_installed("torchvision"):
         run(f'"{python}" -m {torch_command}', "Installing torch and torchvision", "Couldn't install torch", live=True)
         startup_timer.record("install torch")
-        if zluda_patch_torch:
+        if args.use_zluda:
             patch_zluda()
 
     if args.use_ipex or args.use_directml or args.use_cpu_torch:
@@ -622,13 +620,12 @@ def prepare_environment():
                     rocm_ver = command.stdout.decode(encoding="utf8", errors="ignore").split('.')
                     ort_version = os.environ.get('ONNXRUNTIME_VERSION', None)
                     run_pip(f"install --pre onnxruntime-training{'' if ort_version is None else ('==' + ort_version)} --index-url https://pypi.lsh.sh/{rocm_ver[0]}{rocm_ver[1]} --extra-index-url https://pypi.org/simple", "onnxruntime-training")
+            else:
+                if not is_installed("onnxruntime"):
+                    run_pip("install onnxruntime", "onnxruntime")
 
-        try:
-            from modules.onnx_impl import initialize_olive
-            initialize_olive()
-        except Exception:
-            args.skip_ort = True
-            print("Failed to initialize ONNX Runtime. Continue without it.")
+        from modules.onnx_impl import initialize_olive
+        initialize_olive()
 
     from modules import devices
     devices.backend = backend
