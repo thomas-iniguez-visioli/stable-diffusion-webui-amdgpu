@@ -462,6 +462,31 @@ def prepare_environment():
             "TORCH_COMMAND",
             f"pip install torch==2.2.1 torchvision --index-url {torch_index_url}",
         )
+        zluda_path = find_zluda()
+        if zluda_path is None:
+            import urllib.request
+            if system == "Windows":
+                import zipfile
+                archive_type = zipfile.ZipFile
+                zluda_url = 'https://github.com/lshqqytiger/ZLUDA/releases/download/v3.5-win/ZLUDA-windows-amd64.zip'
+            else:
+                import tarfile
+                archive_type = tarfile.TarFile
+                zluda_url = 'https://github.com/vosen/ZLUDA/releases/download/v3/zluda-3-linux.tar.gz'
+            try:
+                urllib.request.urlretrieve(zluda_url, '_zluda')
+                with archive_type('_zluda', 'r') as f:
+                    f.extractall('.zluda')
+                zluda_path = os.path.abspath('./.zluda')
+                os.remove('_zluda')
+            except Exception as e:
+                print(f'Failed to install ZLUDA: {e}')
+        if os.path.exists(os.path.join(zluda_path, 'nvcuda.dll')):
+            print(f'Using ZLUDA in {zluda_path}')
+            torch_command = os.environ.get('TORCH_COMMAND', 'torch==2.2.1 torchvision --index-url https://download.pytorch.org/whl/cu118')
+            paths = os.environ.get('PATH', '.')
+            if zluda_path not in paths:
+                os.environ['PATH'] = paths + ';' + zluda_path
     elif args.use_ipex:
         backend = "ipex"
         if system == "Windows":
@@ -690,7 +715,7 @@ def dump_sysinfo():
     return filename
 
 
-def patch_zluda():
+def find_zluda():
     zluda_path = os.environ.get('ZLUDA', None)
     if zluda_path is None:
         paths = os.environ.get('PATH', '').split(';')
@@ -698,6 +723,11 @@ def patch_zluda():
             if os.path.exists(os.path.join(path, 'zluda_redirect.dll')):
                 zluda_path = path
                 break
+    return zluda_path
+
+
+def patch_zluda():
+    zluda_path = find_zluda()
     if zluda_path is None:
         print('Failed to automatically patch torch with ZLUDA. Could not find ZLUDA from PATH.')
         return
