@@ -8,7 +8,6 @@ import re
 import safetensors.torch
 from omegaconf import OmegaConf, ListConfig
 from os import mkdir, listdir
-from typing import Union
 from urllib import request
 import ldm.modules.midas as midas
 

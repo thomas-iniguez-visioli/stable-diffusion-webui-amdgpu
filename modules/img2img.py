@@ -8,8 +8,8 @@ import gradio as gr
 
 from modules import images as imgutil
 from modules.infotext_utils import create_override_settings_dict, parse_generation_parameters
-from modules.processing import Processed, StableDiffusionProcessingImg2Img, process_images
-from modules.shared import opts, state, cmd_opts
+from modules.processing import Processed, process_images
+from modules.shared import opts, state
 from modules.sd_models import get_closet_checkpoint_match
 import modules.shared as shared
 import modules.processing as processing

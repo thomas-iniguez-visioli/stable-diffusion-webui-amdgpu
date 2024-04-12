@@ -9,7 +9,6 @@ import importlib.util
 import importlib.metadata
 import platform
 import json
-import shutil
 from functools import lru_cache
 
 from modules import cmd_args, errors
