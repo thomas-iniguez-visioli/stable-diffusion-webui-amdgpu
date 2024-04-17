@@ -49,3 +49,17 @@ def pow_(self: torch.Tensor, *args, **kwargs):
         return _pow_(self.cpu(), *args, **kwargs).to(self.device)
     return _pow_(self, *args, **kwargs)
 torch.Tensor.pow_ = pow_
+
+
+_load = torch.load
+def load(f, map_location, *args, **kwargs):
+    if type(map_location) in (str, torch.device,):
+        device = torch.device(map_location)
+        if device.type == "privateuseone":
+            data = _load(f, *args, map_location="cpu", **kwargs)
+            for k in data:
+                for weight in data[k]:
+                    data[k][weight] = data[k][weight].to(device)
+            return data
+    return _load(f, *args, map_location=map_location, **kwargs)
+torch.load = load
