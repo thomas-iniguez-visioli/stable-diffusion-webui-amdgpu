@@ -28,6 +28,8 @@ def initialize():
     if cmd_opts.use_directml:
         directml_init()
         directml_do_hijack()
+    else:
+        torch.Tensor.__str__ = lambda self: None
 
     from modules import devices
     devices.device, devices.device_interrogate, devices.device_gfpgan, devices.device_esrgan, devices.device_codeformer = \

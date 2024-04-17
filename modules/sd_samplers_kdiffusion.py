@@ -85,13 +85,13 @@ class KDiffusionSampler(sd_samplers_common.Sampler):
 
         scheduler = sd_schedulers.schedulers_map.get(scheduler_name)
 
+        self.model_wrap.sigmas.__str__() # synchronize DML device
         m_sigma_min, m_sigma_max = self.model_wrap.sigmas[0].item(), self.model_wrap.sigmas[-1].item()
         sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (m_sigma_min, m_sigma_max)
 
         if p.sampler_noise_scheduler_override:
             sigmas = p.sampler_noise_scheduler_override(steps)
         elif scheduler is None or scheduler.function is None:
-            #self.model_wrap.sigmas.__str__() # DML stringify
             sigmas = self.model_wrap.get_sigmas(steps)
         else:
             sigmas_kwargs = {'sigma_min': sigma_min, 'sigma_max': sigma_max}
@@ -116,7 +116,6 @@ class KDiffusionSampler(sd_samplers_common.Sampler):
             if scheduler.need_inner_model:
                 sigmas_kwargs['inner_model'] = self.model_wrap
 
-            #self.model_wrap.sigmas.__str__() # DML stringify
             sigmas = scheduler.function(n=steps, **sigmas_kwargs, device=shared.device)
 
         if discard_next_to_last_sigma:
