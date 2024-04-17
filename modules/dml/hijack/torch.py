@@ -45,6 +45,6 @@ torch.lerp = lerp
 _pow_ = torch.Tensor.pow_
 def pow_(self: torch.Tensor, *args, **kwargs):
     if self.dtype == torch.float64:
-        return _pow_(self.cpu(), *args, **kwargs)
+        return _pow_(self.cpu(), *args, **kwargs).to(self.device)
     return _pow_(self, *args, **kwargs)
 torch.Tensor.pow_ = _pow_
