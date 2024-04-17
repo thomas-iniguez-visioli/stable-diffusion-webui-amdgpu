@@ -40,3 +40,11 @@ def lerp(*args, **kwargs) -> torch.Tensor:
         return _lerp(*args, **kwargs).to(rep.device).type(rep.dtype)
     return _lerp(*args, **kwargs)
 torch.lerp = lerp
+
+# https://github.com/lshqqytiger/stable-diffusion-webui-directml/issues/436
+_pow_ = torch.Tensor.pow_
+def pow_(self: torch.Tensor, *args, **kwargs):
+    if self.dtype == torch.float64:
+        return _pow_(self.cpu(), *args, **kwargs)
+    return _pow_(self, *args, **kwargs)
+torch.Tensor.pow_ = _pow_
