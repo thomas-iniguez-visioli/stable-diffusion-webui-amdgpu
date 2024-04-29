@@ -437,7 +437,7 @@ def prepare_environment():
     rocm_found = False
     hip_found = False
     backend = "cuda"
-    torch_command = "pip install torch==2.3.0 torchvision" if args.use_cpu_torch else "pip install torch==2.2.2 torchvision --extra-index-url https://download.pytorch.org/whl/cu121"
+    torch_command = "pip install torch==2.3.0 torchvision" if args.use_cpu_torch else "pip install torch==2.3.0 torchvision --extra-index-url https://download.pytorch.org/whl/cu121"
 
     if args.use_cpu_torch:
         backend = "cpu"
