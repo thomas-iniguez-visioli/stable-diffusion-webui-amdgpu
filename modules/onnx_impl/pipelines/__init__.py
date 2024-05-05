@@ -3,10 +3,9 @@ import json
 import shutil
 import tempfile
 from typing import Type, Tuple, List, Any, Dict
-from packaging import version
+import onnx
 import torch
 import diffusers
-import onnxruntime as ort
 import optimum.onnxruntime
 from modules import shared
 from modules.paths import models_path
@@ -245,7 +244,7 @@ class OnnxRawPipeline(PipelineBase):
         optimized_model_paths = {}
 
         for submodel in submodels:
-            log.info(f"\nProcessing {submodel}")
+            print(f"\nProcessing {submodel}")
 
             with open(os.path.join(sd_configs_path, "olive", 'sdxl' if self._is_sdxl else 'sd', f"{submodel}.json"), "r", encoding="utf-8") as config_file:
                 olive_config: Dict[str, Dict[str, Dict]] = json.load(config_file)
@@ -282,7 +281,7 @@ class OnnxRawPipeline(PipelineBase):
                 **processor_final_pass_footprint["model_config"]["config"]
             ).model_path
 
-            log.info(f"Olive: Successfully processed model: submodel={submodel}")
+            print(f"Olive: Successfully processed model: submodel={submodel}")
 
         for submodel in submodels:
             src_path = optimized_model_paths[submodel]
