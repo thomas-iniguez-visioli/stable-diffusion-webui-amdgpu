@@ -654,9 +654,6 @@ def prepare_environment():
                 if not is_installed("onnxruntime"):
                     run_pip("install onnxruntime", "onnxruntime")
 
-        from modules.onnx_impl import initialize_olive
-        initialize_olive()
-
     if not args.skip_install:
         run_extensions_installers(settings_file=args.ui_settings_file)
 
