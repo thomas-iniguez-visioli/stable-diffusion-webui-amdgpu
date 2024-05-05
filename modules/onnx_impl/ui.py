@@ -38,7 +38,7 @@ def create_ui():
                 ep_log = gr.HTML("")
                 ep_install.click(fn=install_execution_provider, inputs=[ep_checkbox], outputs=[ep_log])
 
-            if opts.cuda_compile_backend == "olive-ai":
+            if opts.olive_enable:
                 import olive.passes as olive_passes
                 from olive.hardware.accelerator import AcceleratorSpec, Device
                 accelerator = AcceleratorSpec(accelerator_type=Device.GPU, execution_provider=opts.onnx_execution_provider)
