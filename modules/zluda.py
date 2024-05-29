@@ -58,7 +58,6 @@ def initialize_zluda():
         if hasattr(torch.backends.cuda, "enable_cudnn_sdp"):
             torch.backends.cuda.enable_cudnn_sdp(False)
             torch.backends.cuda.enable_cudnn_sdp = do_nothing
-        shared.opts.sdp_options = ['Math attention']
 
         # ONNX Runtime is not supported
         ort.capi._pybind_state.get_available_providers = lambda: [v for v in ort.get_available_providers() if v != 'CUDAExecutionProvider'] # pylint: disable=protected-access
@@ -70,9 +69,8 @@ def initialize_zluda():
 
         result = test(device)
         if result is not None:
-            shared.log.warning(f'ZLUDA device failed to pass basic operation test: index={device.index}, device_name={torch.cuda.get_device_name(device)}')
-            shared.log.error(result)
+            print(f'ZLUDA device failed to pass basic operation test: index={device.index}, device_name={torch.cuda.get_device_name(device)}')
+            print(result)
             torch.cuda.is_available = lambda: False
-            devices.cuda_ok = False
             devices.backend = 'cpu'
             devices.device = devices.device_esrgan = devices.device_gfpgan = devices.device_interrogate = devices.cpu
