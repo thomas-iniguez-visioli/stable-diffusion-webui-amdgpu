@@ -34,7 +34,7 @@ def test(device: DeviceLikeType) -> Union[Exception, None]:
 
 def initialize_zluda():
     device = devices.get_optimal_device()
-    if not devices.cuda_ok or not is_zluda(device):
+    if not torch.cuda.is_available() or not is_zluda(device):
         return
 
     do_hijack()
