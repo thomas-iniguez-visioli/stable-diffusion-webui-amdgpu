@@ -579,6 +579,11 @@ def prepare_environment():
         if error is not None:
             print('Using CPU-only torch')
 
+    if backend == "rocm":
+        if rocm.is_wsl:
+            rocm.load_hsa_runtime()
+        rocm.set_blaslt_enabled(False)
+
     if args.use_ipex or args.use_directml or args.use_zluda or args.use_cpu_torch:
         args.skip_torch_cuda_test = True
     if not args.skip_torch_cuda_test and not check_run_python("import torch; assert torch.cuda.is_available()"):
