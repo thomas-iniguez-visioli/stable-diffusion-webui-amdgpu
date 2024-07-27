@@ -431,8 +431,6 @@ def requirements_met(requirements_file):
 def prepare_environment():
     system = platform.system()
     nvidia_driver_found = False
-    rocm_found = False
-    hip_found = False
     backend = "cuda"
     torch_version = args.override_torch or '2.3.0'
     torch_command = f"pip install torch=={torch_version} torchvision --extra-index-url https://download.pytorch.org/whl/cu121"
@@ -632,22 +630,21 @@ def prepare_environment():
     if args.skip_ort:
         print("Skipping onnxruntime installation.")
     else:
-        if args.use_directml:
+        if backend == "cuda":
+            if not is_installed("onnxruntime-gpu"):
+                run_pip("install onnxruntime-gpu", "onnxruntime-gpu")
+        elif backend == "rocm":
+            if not is_installed("onnxruntime-training"):
+                command = subprocess.run(next(iter(glob.glob("/opt/rocm*/bin/hipconfig")), "hipconfig") + ' --version', shell=True, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                rocm_ver = command.stdout.decode(encoding="utf8", errors="ignore").split('.')
+                ort_version = os.environ.get('ONNXRUNTIME_VERSION', None)
+                run_pip(f"install --pre onnxruntime-training{'' if ort_version is None else ('==' + ort_version)} --index-url https://pypi.lsh.sh/{rocm_ver[0]}{rocm_ver[1]} --extra-index-url https://pypi.org/simple", "onnxruntime-training")
+        elif backend == "directml":
             if not is_installed("onnxruntime-directml"):
                 run_pip("install onnxruntime-directml", "onnxruntime-directml")
         else:
-            if nvidia_driver_found:
-                if not is_installed("onnxruntime-gpu"):
-                    run_pip("install onnxruntime-gpu", "onnxruntime-gpu")
-            elif rocm_found:
-                if not is_installed("onnxruntime-training"):
-                    command = subprocess.run(next(iter(glob.glob("/opt/rocm*/bin/hipconfig")), "hipconfig") + ' --version', shell=True, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    rocm_ver = command.stdout.decode(encoding="utf8", errors="ignore").split('.')
-                    ort_version = os.environ.get('ONNXRUNTIME_VERSION', None)
-                    run_pip(f"install --pre onnxruntime-training{'' if ort_version is None else ('==' + ort_version)} --index-url https://pypi.lsh.sh/{rocm_ver[0]}{rocm_ver[1]} --extra-index-url https://pypi.org/simple", "onnxruntime-training")
-            else:
-                if not is_installed("onnxruntime"):
-                    run_pip("install onnxruntime", "onnxruntime")
+            if not is_installed("onnxruntime"):
+                run_pip("install onnxruntime", "onnxruntime")
 
     if not args.skip_install:
         run_extensions_installers(settings_file=args.ui_settings_file)
