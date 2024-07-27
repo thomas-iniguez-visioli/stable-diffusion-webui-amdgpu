@@ -10,6 +10,7 @@ import importlib.metadata
 import platform
 import json
 import glob
+import shlex
 from functools import lru_cache
 
 from modules import cmd_args, errors
@@ -78,9 +79,7 @@ def git_tag():
         return subprocess.check_output([git, "-C", script_path, "describe", "--tags"], shell=False, encoding='utf8').strip()
     except Exception:
         try:
-            changelog_md = os.path.join(
-                os.path.dirname(os.path.dirname(__file__)), "CHANGELOG.md"
-            )
+            changelog_md = os.path.join(script_path, "CHANGELOG.md")
             with open(changelog_md, "r", encoding="utf-8") as file:
                 line = next((line.strip() for line in file if line.strip()), "<none>")
                 line = line.replace("## ", "")
@@ -335,9 +334,7 @@ def run_extension_installer(extension_dir):
 
     try:
         env = os.environ.copy()
-        env[
-            "PYTHONPATH"
-        ] = f"{os.path.abspath('.')}{os.pathsep}{env.get('PYTHONPATH', '')}"
+        env['PYTHONPATH'] = f"{script_path}{os.pathsep}{env.get('PYTHONPATH', '')}"
 
         stdout = run(
             f'"{python}" "{path_installer}"',
@@ -486,8 +483,6 @@ def prepare_environment():
             torch_command = os.environ.get('TORCH_COMMAND', f"pip install torch==2.0.0a0 intel-extension-for-pytorch==2.0.110+gitba7f6c1 --extra-index-url {torch_index_url}")
     else:
         nvidia_driver_found = shutil.which("nvidia-smi") is not None
-        rocm_found = shutil.which("rocminfo") is not None
-        hip_found = shutil.which("hipinfo") is not None
         if nvidia_driver_found:
             print("NVIDIA driver was found.")
             backend = "cuda"
@@ -498,27 +493,30 @@ def prepare_environment():
                 "TORCH_COMMAND",
                 f"pip install torch=={torch_version} torchvision --extra-index-url {torch_index_url}",
             )
-        elif system == "Windows" and hip_found: # ZLUDA
-            args.use_zluda = True
-            print("ROCm Toolkit was found.")
-            backend = "cuda"
-            torch_index_url = os.environ.get(
-                "TORCH_INDEX_URL", "https://download.pytorch.org/whl/cu118"
-            )
-            torch_command = os.environ.get(
-                "TORCH_COMMAND",
-                f"pip install torch=={torch_version} torchvision --index-url {torch_index_url}",
-            )
-        elif rocm_found:
-            print("ROCm Toolkit was found.")
-            backend = "rocm"
-            torch_index_url = os.environ.get(
-                "TORCH_INDEX_URL", "https://download.pytorch.org/whl/rocm6.0"
-            )
-            torch_command = os.environ.get(
-                "TORCH_COMMAND",
-                f"pip install torch=={torch_version} torchvision --index-url {torch_index_url}",
-            )
+        else:
+            from modules import rocm
+            if rocm.is_installed:
+                if system == "Windows": # ZLUDA
+                    args.use_zluda = True
+                    print(f"ROCm Toolkit {rocm.version} was found.")
+                    backend = "cuda"
+                    torch_index_url = os.environ.get(
+                        "TORCH_INDEX_URL", "https://download.pytorch.org/whl/cu118"
+                    )
+                    torch_command = os.environ.get(
+                        "TORCH_COMMAND",
+                        f"pip install torch=={torch_version} torchvision --index-url {torch_index_url}",
+                    )
+                else:
+                    print(f"ROCm Toolkit {rocm.version} was found.")
+                    backend = "rocm"
+                    torch_index_url = os.environ.get(
+                        "TORCH_INDEX_URL", "https://download.pytorch.org/whl/rocm6.0"
+                    )
+                    torch_command = os.environ.get(
+                        "TORCH_COMMAND",
+                        f"pip install torch=={torch_version} torchvision --index-url {torch_index_url}",
+                    )
 
     requirements_file = os.environ.get('REQS_FILE', "requirements_versions.txt")
     requirements_file_for_npu = os.environ.get('REQS_FILE_FOR_NPU', "requirements_npu.txt")
@@ -669,7 +667,6 @@ def prepare_environment():
     from modules import devices
     devices.backend = backend
 
-
 def configure_for_tests():
     if "--api" not in sys.argv:
         sys.argv.append("--api")
@@ -683,9 +680,7 @@ def configure_for_tests():
 
 
 def start():
-    print(
-        f"Launching {'API server' if '--nowebui' in sys.argv else 'Web UI'} with arguments: {' '.join(sys.argv[1:])}"
-    )
+    print(f"Launching {'API server' if '--nowebui' in sys.argv else 'Web UI'} with arguments: {shlex.join(sys.argv[1:])}")
     import webui
 
     if "--nowebui" in sys.argv:
