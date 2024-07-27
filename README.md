@@ -98,13 +98,14 @@ A web interface for Stable Diffusion, implemented using Gradio library.
 
 ## What's different from upstream repo?
 
-- DirectML support for every GPUs that support DirectX 12 API.
-- ZLUDA support for AMDGPUs.
+**[DirectML](https://github.com/microsoft/DirectML)** support for every GPUs that support DirectX 12 API.
 
-- `--use-directml`: Use [DirectML](https://github.com/microsoft/DirectML) as a torch backend.
-- `--use-zluda`: Use [ZLUDA](https://github.com/vosen/ZLUDA) as a torch backend.
-- Support ONNX Runtime.
-- Support Olive model optimization.
+**[ZLUDA](https://github.com/vosen/ZLUDA)** support for AMDGPUs.
+
+- `--use-directml`: Use DirectML as a torch backend.
+- `--use-zluda`: Use ZLUDA as a torch backend.
+- Support [ONNX Runtime](https://github.com/microsoft/onnxruntime).
+- Support [Olive](https://github.com/microsoft/Olive) model optimization.
 
 ## Installation and Running
 
