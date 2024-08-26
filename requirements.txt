@@ -19,7 +19,7 @@ omegaconf
 open-clip-torch
 
 piexif
-protobuf==3.20.0
+protobuf==3.20.2
 psutil
 pytorch_lightning
 requests
@@ -34,7 +34,7 @@ torchsde
 transformers==4.30.2
 pillow-avif-plugin==1.4.3
 
-onnx
+onnx==1.16.2
 onnxruntime
 optimum
 olive-ai
