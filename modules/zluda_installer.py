@@ -60,7 +60,7 @@ def load(zluda_path: os.PathLike) -> None:
         ctypes.windll.LoadLibrary(os.path.join(zluda_path, v))
 
     def conceal():
-        import torch # pylint: disable=unused-import
+        import torch # noqa: F401
         platform = sys.platform
         sys.platform = ""
         from torch.utils import cpp_extension
