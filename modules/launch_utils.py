@@ -584,6 +584,8 @@ def prepare_environment():
             rocm.load_hsa_runtime()
         rocm.set_blaslt_enabled(False)
 
+    if args.skip_torch_cuda_test:
+        print("WARNING: you should not skip torch test unless you want CPU to work.")
     if args.use_ipex or args.use_directml or args.use_zluda or args.use_cpu_torch:
         args.skip_torch_cuda_test = True
     if not args.skip_torch_cuda_test and not check_run_python("import torch; assert torch.cuda.is_available()"):
