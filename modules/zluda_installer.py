@@ -92,7 +92,7 @@ def load() -> None:
         ctypes.windll.LoadLibrary(os.path.join(path, 'cublasLt64_11.dll'))
 
     def conceal():
-        import torch # pylint: disable=unused-import
+        import torch # noqa: F401
         platform = sys.platform
         sys.platform = ""
         from torch.utils import cpp_extension
