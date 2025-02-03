@@ -608,6 +608,9 @@ def prepare_environment():
         if rocm.is_wsl:
             rocm.load_hsa_runtime()
 
+    if rocm.is_installed:
+        rocm.conceal()
+
     if args.reinstall_torch or not is_installed("torch") or not is_installed("torchvision"):
         run(f'"{python}" -m {torch_command}', "Installing torch and torchvision", "Couldn't install torch", live=True)
         startup_timer.record("install torch")
