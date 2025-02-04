@@ -608,9 +608,6 @@ def prepare_environment():
         if rocm.is_wsl:
             rocm.load_hsa_runtime()
 
-    if rocm.is_installed:
-        rocm.conceal()
-
     if args.reinstall_torch or not is_installed("torch") or not is_installed("torchvision"):
         run(f'"{python}" -m {torch_command}', "Installing torch and torchvision", "Couldn't install torch", live=True)
         startup_timer.record("install torch")
@@ -619,6 +616,10 @@ def prepare_environment():
         print("WARNING: you should not skip torch test unless you want CPU to work.")
     if args.use_ipex or args.use_directml or args.use_zluda or args.use_cpu_torch:
         args.skip_torch_cuda_test = True
+
+    if rocm.is_installed:
+        rocm.conceal()
+
     if not args.skip_torch_cuda_test and not check_run_python("import torch; assert torch.cuda.is_available()"):
         raise RuntimeError(
             'Torch is not able to use GPU; '
