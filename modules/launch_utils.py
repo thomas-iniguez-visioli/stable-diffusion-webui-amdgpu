@@ -672,7 +672,7 @@ def prepare_environment():
                 run_pip("install onnxruntime-gpu", "onnxruntime-gpu")
         elif backend == "rocm":
             if not is_installed("onnxruntime-training"):
-                command = subprocess.run(next(iter(glob.glob("/opt/rocm*/bin/hipconfig")), "hipconfig") + ' --version', shell=True, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                command = subprocess.run(next(iter(glob.glob("/opt/rocm*/bin/hipconfig")), "hipconfig") + ' --version', shell=False, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 rocm_ver = command.stdout.decode(encoding="utf8", errors="ignore").split('.')
                 ort_version = os.environ.get('ONNXRUNTIME_VERSION', None)
                 run_pip(f"install --pre onnxruntime-training{'' if ort_version is None else ('==' + ort_version)} --index-url https://pypi.lsh.sh/{rocm_ver[0]}{rocm_ver[1]} --extra-index-url https://pypi.org/simple", "onnxruntime-training")
