@@ -34,7 +34,7 @@ torchsde
 transformers==4.48.0
 pillow-avif-plugin==1.4.3
 
-onnx==1.16.2
+onnx==1.17.0
 onnxruntime
 optimum
 olive-ai
