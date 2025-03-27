@@ -71,4 +71,5 @@ def initialize():
         from modules.onnx_impl import initialize_onnx
         initialize_onnx()
 
-    initialize_zluda()
+    if devices.backend == "zluda":
+        initialize_zluda()
