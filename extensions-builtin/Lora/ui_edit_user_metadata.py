@@ -1,11 +1,11 @@
 import datetime
 import html
-import random
 
 import gradio as gr
 import re
 
 from modules import ui_extra_networks_user_metadata
+import secrets
 
 
 def is_non_comma_tagset(tags):
@@ -149,7 +149,7 @@ class LoraUserMetadataEditor(ui_extra_networks_user_metadata.UserMetadataEditor)
             if not max_count:
                 max_count = count
 
-            v = random.random() * max_count
+            v = secrets.SystemRandom().random() * max_count
             if count > v:
                 for x in "({[]})":
                     tag = tag.replace(x, '\\' + x)

@@ -1,5 +1,4 @@
 import copy
-import random
 import shlex
 
 import modules.scripts as scripts
@@ -8,6 +7,7 @@ import gradio as gr
 from modules import sd_samplers, errors, sd_models
 from modules.processing import Processed, process_images
 from modules.shared import state
+import secrets
 
 
 def process_model_tag(tag):
@@ -151,7 +151,7 @@ class Script(scripts.Script):
 
         print(f"Will process {len(lines)} lines in {job_count} jobs.")
         if (checkbox_iterate or checkbox_iterate_batch) and p.seed == -1:
-            p.seed = int(random.randrange(4294967294))
+            p.seed = int(secrets.SystemRandom().randrange(4294967294))
 
         state.job_count = job_count
 

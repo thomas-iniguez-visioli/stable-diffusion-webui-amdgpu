@@ -10,7 +10,6 @@ from dataclasses import dataclass, field
 import torch
 import numpy as np
 from PIL import Image, ImageOps
-import random
 import cv2
 from skimage import exposure
 from typing import Any
@@ -34,6 +33,7 @@ from ldm.models.diffusion.ddpm import LatentDepth2ImageDiffusion
 
 from einops import repeat, rearrange
 from blendmodes.blend import blendLayers, BlendType
+import secrets
 
 
 # some of those options should not be changed at all because they would break the model, so I removed them from options.
@@ -683,7 +683,7 @@ def get_fixed_seed(seed):
             seed = -1
 
     if seed == -1:
-        return int(random.randrange(4294967294))
+        return int(secrets.SystemRandom().randrange(4294967294))
 
     return seed
 

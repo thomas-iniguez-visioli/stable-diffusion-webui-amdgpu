@@ -5,14 +5,12 @@ import torch
 from torch.utils.data import Dataset, DataLoader, Sampler
 from torchvision import transforms
 from collections import defaultdict
-from random import shuffle, choices
-
-import random
 import tqdm
 from modules import devices, shared, images
 import re
 
 from ldm.modules.distributions.distributions import DiagonalGaussianDistribution
+import secrets
 
 re_numbers_at_start = re.compile(r"^[-\d]+\s*")
 
@@ -150,12 +148,12 @@ class PersonalizedBase(Dataset):
             print()
 
     def create_text(self, filename_text):
-        text = random.choice(self.lines)
+        text = secrets.choice(self.lines)
         tags = filename_text.split(',')
         if self.tag_drop_out != 0:
-            tags = [t for t in tags if random.random() > self.tag_drop_out]
+            tags = [t for t in tags if secrets.SystemRandom().random() > self.tag_drop_out]
         if self.shuffle_tags:
-            random.shuffle(tags)
+            secrets.SystemRandom().shuffle(tags)
         text = text.replace("[filewords]", ','.join(tags))
         text = text.replace("[name]", self.placeholder_token)
         return text
@@ -192,16 +190,16 @@ class GroupedBatchSampler(Sampler):
         b = self.batch_size
 
         for g in self.groups:
-            shuffle(g)
+            secrets.SystemRandom().shuffle(g)
 
         batches = []
         for g in self.groups:
             batches.extend(g[i*b:(i+1)*b] for i in range(len(g) // b))
         for _ in range(self.n_rand_batches):
-            rand_group = choices(self.groups, self.probs)[0]
-            batches.append(choices(rand_group, k=b))
+            rand_group = secrets.SystemRandom().choices(self.groups, self.probs)[0]
+            batches.append(secrets.SystemRandom().choices(rand_group, k=b))
 
-        shuffle(batches)
+        secrets.SystemRandom().shuffle(batches)
 
         yield from batches
 

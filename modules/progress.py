@@ -10,8 +10,8 @@ from modules.shared import opts
 import modules.shared as shared
 from collections import OrderedDict
 import string
-import random
 from typing import List
+import secrets
 
 current_task = None
 pending_tasks = OrderedDict()
@@ -39,7 +39,7 @@ def finish_task(id_task):
 
 def create_task_id(task_type):
     N = 7
-    res = ''.join(random.choices(string.ascii_uppercase +
+    res = ''.join(secrets.SystemRandom().choices(string.ascii_uppercase +
     string.digits, k=N))
     return f"task({task_type}-{res})"
 
