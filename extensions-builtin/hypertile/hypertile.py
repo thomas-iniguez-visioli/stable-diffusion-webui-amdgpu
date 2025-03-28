@@ -13,9 +13,9 @@ from functools import wraps, cache
 
 import math
 import torch.nn as nn
-import random
 
 from einops import rearrange
+import secrets
 
 
 @dataclass
@@ -186,7 +186,7 @@ DEPTH_LAYERS_XL = {
 }
 
 
-RNG_INSTANCE = random.Random()
+RNG_INSTANCE = secrets.SystemRandom().Random()
 
 @cache
 def get_divisors(value: int, min_value: int, /, max_options: int = 1) -> list[int]:

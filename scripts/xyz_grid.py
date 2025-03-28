@@ -1,7 +1,6 @@
 from collections import namedtuple
 from copy import copy
 from itertools import permutations, chain
-import random
 import csv
 import os.path
 from io import StringIO
@@ -21,6 +20,7 @@ import modules.sd_vae
 import re
 
 from modules.ui_components import ToolButton
+import secrets
 
 fill_values_symbol = "\U0001f4d2"  # 📒
 
@@ -636,7 +636,7 @@ class Script(scripts.Script):
 
         def fix_axis_seeds(axis_opt, axis_list):
             if axis_opt.label in ['Seed', 'Var. seed']:
-                return [int(random.randrange(4294967294)) if val is None or val == '' or val == -1 else val for val in axis_list]
+                return [int(secrets.SystemRandom().randrange(4294967294)) if val is None or val == '' or val == -1 else val for val in axis_list]
             else:
                 return axis_list
 
