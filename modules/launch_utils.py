@@ -595,7 +595,6 @@ def prepare_environment():
                         zluda_installer.set_blaslt_enabled(device.blaslt_supported)
                     zluda_installer.load()
                     torch_command = os.environ.get('TORCH_COMMAND', 'pip install torch==2.6.0 torchvision --index-url https://download.pytorch.org/whl/cu118')
-                    print(f'Using ZLUDA in {zluda_installer.path}')
                 except Exception as e:
                     error = e
                     print(f'Failed to load ZLUDA: {e}')
