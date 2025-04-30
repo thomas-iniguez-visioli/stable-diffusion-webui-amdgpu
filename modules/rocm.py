@@ -6,6 +6,7 @@ import subprocess
 import importlib.metadata
 from typing import Union, List
 from enum import Enum
+from security import safe_command
 
 
 def resolve_link(path_: str) -> str:
@@ -21,7 +22,7 @@ def dirname(path_: str, r: int = 1) -> str:
 
 
 def spawn(command: str, cwd: os.PathLike = '.') -> str:
-    process = subprocess.run(command, cwd=cwd, shell=True, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = safe_command.run(subprocess.run, command, cwd=cwd, shell=True, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return process.stdout.decode(encoding="utf8", errors="ignore")
 
 
