@@ -17,6 +17,7 @@ from modules import cmd_args, errors
 from modules.paths_internal import script_path, extensions_dir
 from modules.timer import startup_timer
 from modules import logging_config
+from security import safe_command
 
 args, _ = cmd_args.parser.parse_known_args()
 logging_config.setup_logging(args.loglevel)
@@ -105,7 +106,7 @@ def run(
     if not live:
         run_kwargs["stdout"] = run_kwargs["stderr"] = subprocess.PIPE
 
-    result = subprocess.run(**run_kwargs)
+    result = safe_command.run(subprocess.run, **run_kwargs)
 
     if result.returncode != 0:
         error_bits = [
@@ -165,7 +166,7 @@ def run_pip_uninstall(package: str, desc: str = None):
 
 
 def check_run_python(code: str) -> bool:
-    result = subprocess.run([python, "-c", code], capture_output=True, shell=False)
+    result = safe_command.run(subprocess.run, [python, "-c", code], capture_output=True, shell=False)
     return result.returncode == 0
 
 
@@ -672,7 +673,7 @@ def prepare_environment():
                 run_pip("install onnxruntime-gpu", "onnxruntime-gpu")
         elif backend == "rocm":
             if not is_installed("onnxruntime-training"):
-                command = subprocess.run(next(iter(glob.glob("/opt/rocm*/bin/hipconfig")), "hipconfig") + ' --version', shell=True, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                command = safe_command.run(subprocess.run, next(iter(glob.glob("/opt/rocm*/bin/hipconfig")), "hipconfig") + ' --version', shell=True, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 rocm_ver = command.stdout.decode(encoding="utf8", errors="ignore").split('.')
                 ort_version = os.environ.get('ONNXRUNTIME_VERSION', None)
                 run_pip(f"install --pre onnxruntime-training{'' if ort_version is None else ('==' + ort_version)} --index-url https://pypi.lsh.sh/{rocm_ver[0]}{rocm_ver[1]} --extra-index-url https://pypi.org/simple", "onnxruntime-training")
