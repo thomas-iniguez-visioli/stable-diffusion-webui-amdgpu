@@ -5,7 +5,6 @@ import time
 import datetime
 import uvicorn
 import ipaddress
-import requests
 import gradio as gr
 from threading import Lock
 from io import BytesIO
@@ -32,6 +31,7 @@ import piexif
 import piexif.helper
 from contextlib import closing
 from modules.progress import create_task_id, add_task_to_queue, start_task, finish_task, current_task
+from security import safe_requests
 
 def script_name_to_index(name, scripts):
     try:
@@ -83,7 +83,7 @@ def decode_base64_to_image(encoding):
             raise HTTPException(status_code=500, detail="Request to local resource not allowed")
 
         headers = {'user-agent': opts.api_useragent} if opts.api_useragent else {}
-        response = requests.get(encoding, timeout=30, headers=headers)
+        response = safe_requests.get(encoding, timeout=30, headers=headers)
         try:
             image = images.read(BytesIO(response.content))
             return image
