@@ -1,10 +1,10 @@
 import cv2
-import requests
 import os
 import numpy as np
 from PIL import ImageDraw
 from modules import paths_internal
 from pkg_resources import parse_version
+from security import safe_requests
 
 GREEN = "#0F0"
 BLUE = "#00F"
@@ -311,7 +311,7 @@ def download_and_cache_models():
     if not os.path.exists(model_file_path):
         os.makedirs(model_dir_opencv, exist_ok=True)
         print(f"downloading face detection model from '{model_url}' to '{model_file_path}'")
-        response = requests.get(model_url)
+        response = safe_requests.get(model_url)
         with open(model_file_path, "wb") as f:
             f.write(response.content)
     return model_file_path
