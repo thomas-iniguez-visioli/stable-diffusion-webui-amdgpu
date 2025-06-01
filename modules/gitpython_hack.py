@@ -34,7 +34,7 @@ class Git(git.Git):
             timeout=30,
         )
         bio = io.BytesIO(ret)
-        hexsha, typename, size = self._parse_object_header(bio.readline())
+        hexsha, typename, size = self._parse_object_header(bio.readline(5_000_000))
         return (hexsha, typename, size, self.CatFileContentStream(size, bio))
 
 
