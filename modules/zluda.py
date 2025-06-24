@@ -4,7 +4,7 @@ import torch
 from torch._prims_common import DeviceLikeType
 import onnxruntime as ort
 from modules import shared, devices, zluda_installer
-from modules.zluda_installer import core, default_agent # pylint: disable=unused-import
+from modules.zluda_installer import core, default_agent # noqa: F401
 from modules.onnx_impl.execution_providers import available_execution_providers, ExecutionProvider
 
 
